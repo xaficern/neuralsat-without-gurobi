@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .adapters import try_init_gurobi, try_init_highs
 
-_SUPPORTED_BACKEND_NAMES = {"auto", "gurobi", "highs", "scipy"}
+_SUPPORTED_BACKEND_NAMES = {"auto", "gurobi", "highs"}
 
 
 class BackendUnavailableError(RuntimeError):
@@ -16,7 +16,7 @@ def _normalize_backend_name(requested: str | None) -> str:
     if requested not in _SUPPORTED_BACKEND_NAMES:
         raise ValueError(
             f"Unsupported MILP backend '{requested}'. "
-            "Expected one of: auto, gurobi, highs, scipy."
+            "Expected one of: auto, gurobi, highs."
         )
     return requested
 
@@ -33,12 +33,12 @@ def _select_backend(requested: str):
         if requested == "gurobi":
             return False, None, None, "; ".join(errors)
 
-    if requested in {"auto", "highs", "scipy"}:
+    if requested in {"auto", "highs"}:
         ok, backend_module, err = try_init_highs()
         if ok:
             return True, "highs", backend_module, None
         errors.append(f"highs: {err}")
-        if requested in {"highs", "scipy"}:
+        if requested == "highs":
             return False, None, None, "; ".join(errors)
 
     return False, None, None, "; ".join(errors) if errors else None

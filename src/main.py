@@ -37,7 +37,7 @@ if __name__ == '__main__':
                         help="timeout in seconds")
     parser.add_argument('--device', type=str, default='cuda',
                         help="choose device to use for verifying.")
-    parser.add_argument('--mip_backend', type=str, choices=['auto', 'gurobi', 'highs', 'scipy'], default=None,
+    parser.add_argument('--mip_backend', type=str, choices=['auto', 'gurobi', 'highs'], default=None,
                         help="MILP backend selection.")
     parser.add_argument('--verbosity', type=int, choices=[0, 1, 2], default=2, 
                         help='the logger level (0: NOTSET, 1: INFO, 2: DEBUG).')

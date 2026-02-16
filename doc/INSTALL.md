@@ -16,7 +16,8 @@
 
 - **Python 3.10 or 3.11** (recommended for best compatibility; Python 3.13+ may have package compatibility issues)
 - Git (for cloning the repository)
-- [Gurobi](https://www.gurobi.com/): Gurobi requires a license (a [free academic license](https://www.gurobi.com/downloads/free-academic-license/) is available).
+- (Optional) [Gurobi](https://www.gurobi.com/): requires a license (a [free academic license](https://www.gurobi.com/downloads/free-academic-license/) is available).
+- License-free MILP path: SciPy HiGHS backend (`--mip_backend highs`).
 
 ### Setup
 
@@ -143,7 +144,7 @@ Run NeuralSAT from the repository root directory:
 
 ```bash
 python3 src/main.py [-h] --net NET --spec SPEC 
-        [--batch BATCH] [--timeout TIMEOUT] [--device {cpu,cuda}] [--verbosity {0,1,2}] 
+        [--batch BATCH] [--timeout TIMEOUT] [--device {cpu,cuda}] [--mip_backend {auto,gurobi,highs}] [--verbosity {0,1,2}] 
         [--result_file RESULT_FILE] [--export_cex] 
         [--disable_restart] [--disable_stabilize] 
 ```
@@ -156,6 +157,7 @@ Use ```-h``` or ```--help``` to see options that can be passed into **NeuralSAT*
 - `--batch`: Maximum number of parallel checking branches.
 - `--timeout`: Timeout (in second) for verifying one instance.
 - `--device`: Device to use (either `cpu` or `cuda`).
+- `--mip_backend`: MILP backend (`auto`, `gurobi`, `highs`).
 - `--verbosity`: Logging options (0: NOTSET, 1: INFO, 2: DEBUG).
 - `--result_file`: File to export execution results (including counter-example if found).
 - `--export_cex`: Enable writing counter-example to `result_file`.

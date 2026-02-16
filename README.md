@@ -24,6 +24,23 @@
 ## INSTALLATION & USAGE
 - see [INSTALL.md](./doc/INSTALL.md)
 
+## MILP Backend Selection
+
+NeuralSAT supports multiple MILP backends:
+- `gurobi` (default when available)
+- `highs` (license-free path via SciPy HiGHS)
+
+Use `--mip_backend` to choose explicitly:
+
+```bash
+python3 src/main.py --net <model.onnx> --spec <property.vnnlib> --mip_backend highs
+```
+
+Supported values:
+- `auto` (default)
+- `gurobi`
+- `highs`
+
 ## FEATURES
 
 - **fully automatic**, **ease of use** and requires **no tuning** (i.e., no expert knowledge required)
@@ -245,4 +262,3 @@ The *NeuralSAT* research is partially supported by grants from NSF
   and 
   an [Amazon Research Award](https://www.amazon.science/research-awards/program-updates/79-amazon-research-awards-recipients-announced) and 
   an NVIDIA Academic Grant.
-
