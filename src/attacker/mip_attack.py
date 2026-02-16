@@ -1,11 +1,11 @@
 from sortedcontainers import SortedList
-import gurobipy as grb
 import numpy as np
 import random
 import torch
 import time
 import math
 import copy
+from mip.backend import grb, require_mip_backend
 
 from helper.misc.result import AbstractResults
 from helper.misc.check import check_solution
@@ -202,6 +202,7 @@ def mip_solver_worker(candidate, n_inputs):
 class MIPAttacker:
 
     def __init__(self, abstractor, objectives):
+        require_mip_backend('MIP attack')
         self.net = abstractor.pytorch_model
         self.input_shape = abstractor.input_shape
         self.device = abstractor.device

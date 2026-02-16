@@ -2,13 +2,11 @@ import torch
 import json
 import os
 
-try:
-    import gurobipy as grb
-    grb.Model('test')
-    USE_GUROBI = True
-except:
-    print("[!] Gurobi License not found!")
-    USE_GUROBI = False
+from mip.backend import HAS_MIP_BACKEND, MIP_BACKEND_NAME
+
+USE_GUROBI = HAS_MIP_BACKEND and MIP_BACKEND_NAME == 'gurobi'
+if not USE_GUROBI:
+    print("[!] MIP backend unavailable. MIP-based features will be disabled.")
     
 from configure.advanced import BaseSettings, AdvancedSettings
 

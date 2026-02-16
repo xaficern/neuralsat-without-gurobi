@@ -1,11 +1,11 @@
 from beartype import beartype
-import gurobipy as grb
 import numpy as np
 import typing
 import torch
 import math
 import copy
 import os
+from mip.backend import grb, require_mip_backend
 
 from .auto_LiRPA.perturbations import PerturbationLpNorm
 from .auto_LiRPA import BoundedTensor
@@ -317,6 +317,8 @@ def build_lp_solver(self: 'abstractor.abstractor.NetworkAbstractor', model_type:
                     refine: bool = True, intermediate_layer_bounds: dict | None = None, 
                     timeout: float | None = None, timeout_per_neuron: float | None = None) -> None:
     assert model_type in ['lp', 'mip']
+    if model_type == 'mip':
+        require_mip_backend('MIP model construction')
     # delete old LP model
     self.net._reset_solver_vars(self.net.final_node())
     if hasattr(self.net, 'solver_model'): 

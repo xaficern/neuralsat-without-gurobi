@@ -1,9 +1,9 @@
-import gurobipy as grb
 import multiprocessing
 import numpy as np
 import time
 import sys
 import os
+from mip.backend import grb, require_mip_backend
 
 MULTIPROCESS_MODEL = None
 REMOVE_UNUSED = True
@@ -155,6 +155,7 @@ def _mip_solver_worker(candidate):
 
 
 def stabilize(self, mip_model, candidates, unified_lower_bounds, unified_upper_bounds, timeout):
+    require_mip_backend('MIP stabilization')
     global MULTIPROCESS_MODEL
     MULTIPROCESS_MODEL = mip_model
     MULTIPROCESS_MODEL.setParam('TimeLimit', timeout)

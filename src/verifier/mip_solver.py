@@ -1,7 +1,7 @@
-import gurobipy as grb
 import torch
 import time
 import math
+from mip.backend import grb, require_mip_backend
 
 from abstractor.abstractor import NetworkAbstractor
 from helper.misc.check import check_solution
@@ -10,6 +10,7 @@ from helper.misc.result import ReturnStatus
 class MIPSolver:
     
     def __init__(self, net, input_shape):
+        require_mip_backend('MIP presolve verification')
         self.device = 'cpu'
         self.net = net.to(self.device)
         self.input_shape = input_shape

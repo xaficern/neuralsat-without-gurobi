@@ -1,4 +1,4 @@
-import gurobipy as grb
+from mip.backend import grb
 from example.test_model import extract_instance
 from verifier.verifier import Verifier 
 import torch.nn as nn
