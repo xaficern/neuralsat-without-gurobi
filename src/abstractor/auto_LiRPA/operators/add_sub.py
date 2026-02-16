@@ -1,4 +1,4 @@
-from .solver_utils import grb
+from milp.backend import BACKEND
 from .base import *
 
 
@@ -63,7 +63,7 @@ class BoundAdd(Bound):
             gvar_array1 = gvar_array1.reshape(-1)
             new_layer_gurobi_vars = []
             for neuron_idx, var1 in enumerate(gvar_array1):
-                var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+                var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
                 model.addConstr(var == (var1 + var2), name=f'lay{self.name}_{neuron_idx}_eq')
                 new_layer_gurobi_vars.append(var)
         else:
@@ -75,7 +75,7 @@ class BoundAdd(Bound):
             gvar_array2 = gvar_array2.reshape(-1)
             new_layer_gurobi_vars = []
             for neuron_idx, (var1, var2) in enumerate(zip(gvar_array1, gvar_array2)):
-                var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+                var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
                 model.addConstr(var == (var1 + var2), name=f'lay{self.name}_{neuron_idx}_eq')
                 new_layer_gurobi_vars.append(var)
         # reshape to the correct list shape of solver vars
@@ -155,7 +155,7 @@ class BoundSub(Bound):
         gvar_array2 = gvar_array2.reshape(-1)
         new_layer_gurobi_vars = []
         for neuron_idx, (var1, var2) in enumerate(zip(gvar_array1, gvar_array2)):
-            var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+            var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
             model.addConstr(var == (var1 - var2), name=f'lay{self.name}_{neuron_idx}_eq')
             new_layer_gurobi_vars.append(var)
 

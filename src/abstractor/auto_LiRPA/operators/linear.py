@@ -5,7 +5,7 @@ from .activation_base import BoundOptimizableActivation
 from ..patches import Patches, inplace_unfold
 from .bivariate import BoundMul, MulHelper
 from .clampmult import multiply_by_A_signs
-from .solver_utils import grb
+from milp.backend import BACKEND
 from .base import *
 
 EPS = 1e-2
@@ -780,7 +780,7 @@ class BoundLinear(BoundOptimizableActivation):
             coeffs = this_layer_weight[neuron_idx, :]
 
             if solver_pkg == 'gurobi':
-                lin_expr += grb.LinExpr(coeffs, v[0])
+                lin_expr += BACKEND.solver.LinExpr(coeffs, v[0])
             else:
                 # FIXME (01/12/22): This is slow, must be fixed using addRow() or similar.
                 for i in range(len(coeffs)):
@@ -789,7 +789,7 @@ class BoundLinear(BoundOptimizableActivation):
                     except TypeError:
                         lin_expr += coeffs[i] * v[0][i].var
 
-            var = model.addVar(lb=out_lb, ub=out_ub, obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+            var = model.addVar(lb=out_lb, ub=out_ub, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
             model.addConstr(lin_expr == var, name=f'lay{self.name}_{neuron_idx}_eq')
             new_layer_gurobi_vars.append(var)
 

@@ -5,7 +5,7 @@ import torch
 import math
 import copy
 import os
-from mip.backend import grb, require_mip_backend
+from milp.backend import BACKEND, require_mip_backend
 
 from .auto_LiRPA.perturbations import PerturbationLpNorm
 from .auto_LiRPA import BoundedTensor
@@ -325,7 +325,7 @@ def build_lp_solver(self: 'abstractor.abstractor.NetworkAbstractor', model_type:
         del self.net.solver_model
     
     # gurobi solver
-    self.net.solver_model = grb.Model(model_type)
+    self.net.solver_model = BACKEND.solver.Model(model_type)
     self.net.solver_model.setParam('OutputFlag', False)
     self.net.solver_model.setParam("FeasibilityTol", 1e-5)
     # self.net.solver_model.setParam('TimeLimit', timeout)
@@ -407,11 +407,11 @@ def solve_full_assignment(self: 'abstractor.abstractor.NetworkAbstractor', input
     assert len(output_vars) == len(rhs), f"out shape not matching! {len(output_vars)} {len(rhs)}"
     for out_idx in range(len(output_vars)):
         objective_var = tmp_model.getVarByName(output_vars[out_idx].VarName)
-        tmp_model.setObjective(objective_var, grb.GRB.MINIMIZE)
+        tmp_model.setObjective(objective_var, BACKEND.solver.GRB.MINIMIZE)
         tmp_model.update()
         tmp_model.optimize()
 
-        if tmp_model.status == 2:
+        if tmp_model.status == BACKEND.solver.GRB.OPTIMAL:
             # print("Gurobi all node split: feasible!")
             output_lb = objective_var.X
         else:

@@ -1,7 +1,7 @@
 import numpy as np
 
 from .activation_base import BoundOptimizableActivation
-from .solver_utils import grb
+from milp.backend import BACKEND
 from .base import *
 
 
@@ -394,7 +394,7 @@ class BoundMaxPool(BoundOptimizableActivation):
                 out_row_vars = []
                 for out_col_idx in range(this_layer_shape[3]):
                     a_sum = 0.0
-                    v = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+                    v = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
                     for ker_row_idx in range(self.kernel_size[0]):
                         in_row_idx = -self.padding[0] + self.stride[0] * out_row_idx + ker_row_idx
                         if (in_row_idx < 0) or (in_row_idx == len(gvars_array[out_chan_idx][ker_row_idx])):
@@ -406,7 +406,7 @@ class BoundMaxPool(BoundOptimizableActivation):
                                 # This is padding -> value of 0
                                 continue
                             var = gvars_array[out_chan_idx][in_row_idx][in_col_idx]
-                            a = model.addVar(vtype=grb.GRB.BINARY)
+                            a = model.addVar(vtype=BACKEND.solver.GRB.BINARY)
                             a_sum += a
                             model.addConstr(v >= var)
                             model.addConstr(v <= var + (1 - a) * pre_ubs[0, out_chan_idx, out_row_idx, out_col_idx])
@@ -619,7 +619,7 @@ class BoundAveragePool(Bound):
                                 continue
                             coeff = value
                             lin_expr += coeff * gvars_array[out_chan_idx][in_row_idx][in_col_idx]
-                    v = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+                    v = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
                     model.addConstr(lin_expr == v, name=f'lay{self.name}_{neuron_idx}_eq')
                     neuron_idx += 1
 

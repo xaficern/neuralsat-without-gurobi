@@ -3,7 +3,7 @@ import numpy as np
 import time
 import sys
 import os
-from mip.backend import grb, require_mip_backend
+from milp.backend import BACKEND, require_mip_backend
 
 MULTIPROCESS_MODEL = None
 REMOVE_UNUSED = True
@@ -73,13 +73,13 @@ def _mip_solver_worker(candidate):
 
     def get_grb_solution(grb_model, reference, bound_type, eps=1e-5):
         refined = False
-        if grb_model.status == 9: # Timed out. Get current bound.
+        if grb_model.status == BACKEND.solver.GRB.TIME_LIMIT: # Timed out. Get current bound.
             bound = bound_type(grb_model.objbound, reference)
             refined = abs(bound - reference) >= eps
-        elif grb_model.status == 2: # Optimally solved.
+        elif grb_model.status == BACKEND.solver.GRB.OPTIMAL: # Optimally solved.
             bound = grb_model.objbound
             refined = abs(bound - reference) >= eps
-        elif grb_model.status == 15: # Found an lower bound >= 0 or upper bound <= 0, so this neuron becomes stable.
+        elif grb_model.status == BACKEND.solver.GRB.USER_OBJ_LIMIT: # Found an lower bound >= 0 or upper bound <= 0, so this neuron becomes stable.
             bound = bound_type(1., -1.) * eps
             refined = True
         else:
@@ -88,27 +88,27 @@ def _mip_solver_worker(candidate):
 
     def solve_ub(model, v, out_ub, eps=1e-5):
         status_ub_r = -1  # Gurobi solver status.
-        model.setObjective(v, grb.GRB.MAXIMIZE)
+        model.setObjective(v, BACKEND.solver.GRB.MAXIMIZE)
         model.reset()
         model.setParam('BestBdStop', -eps)  # Terminiate as long as we find a negative upper bound.
         # model.write(f'example/test_gurobi_ub.lp')
         
         try:
             model.optimize()
-        except grb.GurobiError as e:
+        except BACKEND.solver.GurobiError as e:
             _gurobi_error(e.message)
         vub, refined, status_ub = get_grb_solution(model, out_ub, min, eps=eps)
         return vub, refined, status_ub, status_ub_r
 
     def solve_lb(model, v, out_lb, eps=1e-5):
         status_lb_r = -1  # Gurobi solver status.
-        model.setObjective(v, grb.GRB.MINIMIZE)
+        model.setObjective(v, BACKEND.solver.GRB.MINIMIZE)
         model.reset()
         model.setParam('BestBdStop', eps)  # Terminiate as long as we find a positive lower bound.
         # model.write(f'example/test_gurobi_lb.lp')
         try:
             model.optimize()
-        except grb.GurobiError as e:
+        except BACKEND.solver.GurobiError as e:
             _gurobi_error(e.message)
         vlb, refined, status_lb = get_grb_solution(model, out_lb, max, eps=eps)
         return vlb, refined, status_lb, status_lb_r

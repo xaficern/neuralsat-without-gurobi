@@ -6,7 +6,7 @@ import torch
 from .activation_base import BoundActivation, BoundOptimizableActivation
 from .clampmult import multiply_by_A_signs
 from ..utils import unravel_index, prod
-from .solver_utils import grb
+from milp.backend import BACKEND
 from .base import *
 
 
@@ -671,14 +671,14 @@ class BoundRelu(BoundTwoPieceLinear):
             else:
                 ub = pre_ub
 
-                var = model.addVar(ub=ub, lb=0, obj=0, vtype=grb.GRB.CONTINUOUS, name=f'ReLU{self.name}_{neuron_idx}')
+                var = model.addVar(ub=ub, lb=0, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'ReLU{self.name}_{neuron_idx}')
 
                 if model_type == "mip" or model_type == "lp_integer":
                     # binary indicator
                     if model_type == "mip":
-                        a = model.addVar(vtype=grb.GRB.BINARY, name=f'aReLU{self.name}_{neuron_idx}')
+                        a = model.addVar(vtype=BACKEND.solver.GRB.BINARY, name=f'aReLU{self.name}_{neuron_idx}')
                     elif model_type == "lp_integer":
-                        a = model.addVar(ub=1, lb=0, vtype=grb.GRB.CONTINUOUS, name=f'aReLU{self.name}_{neuron_idx}')
+                        a = model.addVar(ub=1, lb=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'aReLU{self.name}_{neuron_idx}')
                     relu_integer_vars.append(a)
 
                     new_relu_layer_constrs.append(model.addConstr(pre_var - pre_lb * (1 - a) >= var, name=f'ReLU{self.name}_{neuron_idx}_a_0'))
@@ -897,8 +897,8 @@ class BoundSignMerge(BoundTwoPieceLinear):
                 var = neg_one_var
             else:
                 ub = pre_ub
-                var = model.addVar(ub=ub, lb=pre_lb, obj=0, vtype=grb.GRB.CONTINUOUS, name=f'Sign{self.name}_{neuron_idx}')
-                a = model.addVar(vtype=grb.GRB.BINARY, name=f'aSign{self.name}_{neuron_idx}')
+                var = model.addVar(ub=ub, lb=pre_lb, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'Sign{self.name}_{neuron_idx}')
+                a = model.addVar(vtype=BACKEND.solver.GRB.BINARY, name=f'aSign{self.name}_{neuron_idx}')
                 integer_vars.append(a)
                 layer_constrs.append(model.addConstr(pre_lb * a <= pre_var, name=f'Sign{self.name}_{neuron_idx}_a_0'))
                 layer_constrs.append(model.addConstr(pre_ub * (1 - a) >= pre_var, name=f'Sign{self.name}_{neuron_idx}_a_1'))

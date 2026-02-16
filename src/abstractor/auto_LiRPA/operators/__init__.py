@@ -1,4 +1,4 @@
-from .solver_utils import grb
+from milp.backend import BACKEND
 
 from .activation_base import *
 from .convex_concave import *

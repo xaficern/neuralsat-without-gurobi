@@ -1,4 +1,4 @@
-from mip.backend import grb
+from milp.backend import BACKEND
 from example.test_model import extract_instance
 from verifier.verifier import Verifier 
 import torch.nn as nn
@@ -70,7 +70,7 @@ class Net(nn.Module):
 
 
 if __name__ == "__main__":
-    # model = grb.Model()
+    # model = BACKEND.solver.Model()
     # x0 = model.addVar(name='x0', lb=-1, ub=1)
     # x1 = model.addVar(name='x1', lb=-1, ub=2)
     

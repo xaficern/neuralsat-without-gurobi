@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 import multiprocessing
 import os
+from milp.backend import BACKEND
 
 from .beta_crown import SparseBeta
 from .bound_ops import *
@@ -231,13 +232,13 @@ def _build_solver_input(self: 'BoundedModule', node):
     assert node.perturbation.norm == float("inf")
     
     if self.solver_model is None:
-        self.solver_model = grb.Model()
+        self.solver_model = BACKEND.solver.Model()
         
     inp_gurobi_vars = []
     # zero var will be shared within the solver model
-    zero_var = self.solver_model.addVar(lb=0, ub=0, obj=0, vtype=grb.GRB.CONTINUOUS, name='zero')
-    one_var = self.solver_model.addVar(lb=1, ub=1, obj=0, vtype=grb.GRB.CONTINUOUS, name='one')
-    neg_one_var = self.solver_model.addVar(lb=-1, ub=-1, obj=0, vtype=grb.GRB.CONTINUOUS, name='neg_one')
+    zero_var = self.solver_model.addVar(lb=0, ub=0, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name='zero')
+    one_var = self.solver_model.addVar(lb=1, ub=1, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name='one')
+    neg_one_var = self.solver_model.addVar(lb=-1, ub=-1, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name='neg_one')
     x_L = node.value - node.perturbation.eps if node.perturbation.x_L is None else node.perturbation.x_L
     x_U = node.value + node.perturbation.eps if node.perturbation.x_U is None else node.perturbation.x_U
     x_L = x_L.squeeze(0)
@@ -245,7 +246,7 @@ def _build_solver_input(self: 'BoundedModule', node):
  
     this_layer_shape = x_L.shape
     for dim, (lb, ub) in enumerate(zip(x_L.flatten(), x_U.flatten())):
-        v = self.solver_model.addVar(lb=lb, ub=ub, obj=0, vtype=grb.GRB.CONTINUOUS, name=f'inp_{dim}')
+        v = self.solver_model.addVar(lb=lb, ub=ub, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'inp_{dim}')
         inp_gurobi_vars.append(v)
     inp_gurobi_vars = np.array(inp_gurobi_vars).reshape(this_layer_shape).tolist()
 
@@ -267,13 +268,13 @@ def mip_solver_worker(candidate):
 
     def get_grb_solution(grb_model, reference, bound_type, eps=1e-5):
         refined = False
-        if grb_model.status == 9: # Timed out. Get current bound.
+        if grb_model.status == BACKEND.solver.GRB.TIME_LIMIT: # Timed out. Get current bound.
             bound = bound_type(grb_model.objbound, reference)
             refined = bound != reference
-        elif grb_model.status == 2: # Optimally solved.
+        elif grb_model.status == BACKEND.solver.GRB.OPTIMAL: # Optimally solved.
             bound = grb_model.objbound
             refined = True
-        elif grb_model.status == 15: # Found an lower bound >= 0 or upper bound <= 0, so this neuron becomes stable.
+        elif grb_model.status == BACKEND.solver.GRB.USER_OBJ_LIMIT: # Found an lower bound >= 0 or upper bound <= 0, so this neuron becomes stable.
             bound = bound_type(1., -1.) * eps
             refined = True
         else:
@@ -282,24 +283,24 @@ def mip_solver_worker(candidate):
 
     def solve_ub(model, v, out_ub, eps=1e-5):
         status_ub_r = -1  # Gurbo solver status.
-        model.setObjective(v, grb.GRB.MAXIMIZE)
+        model.setObjective(v, BACKEND.solver.GRB.MAXIMIZE)
         model.reset()
         model.setParam('BestBdStop', -eps)  # Terminiate as long as we find a negative upper bound.
         try:
             model.optimize()
-        except grb.GurobiError as e:
+        except BACKEND.solver.GurobiError as e:
             handle_gurobi_error(e.message)
         vub, refined, status_ub = get_grb_solution(model, out_ub, min)
         return vub, refined, status_ub, status_ub_r
 
     def solve_lb(model, v, out_lb, eps=1e-5):
         status_lb_r = -1  # Gurbo solver status.
-        model.setObjective(v, grb.GRB.MINIMIZE)
+        model.setObjective(v, BACKEND.solver.GRB.MINIMIZE)
         model.reset()
         model.setParam('BestBdStop', eps)  # Terminiate as long as we find a positive lower bound.
         try:
             model.optimize()
-        except grb.GurobiError as e:
+        except BACKEND.solver.GurobiError as e:
             handle_gurobi_error(e.message)
         vlb, refined, status_lb = get_grb_solution(model, out_lb, max)
         return vlb, refined, status_lb, status_lb_r
@@ -343,4 +344,3 @@ def mip_solver_worker(candidate):
         sys.stdout.flush()
 
     return neuron_idx, vlb, vub, neuron_refined
-

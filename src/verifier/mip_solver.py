@@ -1,7 +1,7 @@
 import torch
 import time
 import math
-from mip.backend import grb, require_mip_backend
+from milp.backend import BACKEND, require_mip_backend
 
 from abstractor.abstractor import NetworkAbstractor
 from helper.misc.check import check_solution
@@ -83,7 +83,7 @@ class MIPSolver:
         mip_model.update()
         mip_model.optimize()
             
-        if mip_model.status == grb.GRB.INFEASIBLE:
+        if mip_model.status == BACKEND.solver.GRB.INFEASIBLE:
             return ReturnStatus.UNSAT, None
         
         input_vars = [mip_model.getVarByName(f'inp_{dim}') for dim in range(math.prod(self.input_shape))]

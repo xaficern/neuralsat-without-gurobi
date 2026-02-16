@@ -4,7 +4,7 @@ import copy
 
 from .constant import BoundConstant
 from .leaf import BoundParams
-from .solver_utils import grb
+from milp.backend import BACKEND
 from .base import *
 
 
@@ -270,7 +270,7 @@ class BoundBatchNormalization(Bound):
                 for out_col_idx in range(this_layer_shape[3]):
                     # print(this_layer_bias.shape, out_chan_idx, out_lbs.size(1))
                     lin_expr = tmp_bias[out_chan_idx].item() + tmp_weight[out_chan_idx].item() * gvars_array[out_chan_idx, out_row_idx, out_col_idx]
-                    var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+                    var = model.addVar(lb=-float('inf'), ub=float('inf'), obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
                     model.addConstr(lin_expr == var, name=f'lay{self.name}_{neuron_idx}_eq')
                     neuron_idx += 1
 

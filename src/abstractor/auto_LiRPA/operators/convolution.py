@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..patches import unify_shape, compute_patches_stride_padding, is_shape_used, create_valid_mask
-from .solver_utils import grb
+from milp.backend import BACKEND
 from .base import *
 
 EPS = 1e-2
@@ -289,7 +289,7 @@ class BoundConv(Bound):
                         coeffs = this_layer_weight[out_chan_idx, in_chan_idx, ker_row_min:ker_row_max, ker_col_min:ker_col_max].reshape(-1)
                         gvars = gvars_array[in_chan_idx, in_row_idx_min:in_row_idx_max+1, in_col_idx_min:in_col_idx_max+1].reshape(-1)
                         if solver_pkg == 'gurobi':
-                            lin_expr += grb.LinExpr(coeffs, gvars)
+                            lin_expr += BACKEND.solver.LinExpr(coeffs, gvars)
                         else:
                             for i in range(len(coeffs)):
                                 try:
@@ -310,7 +310,7 @@ class BoundConv(Bound):
                         out_lb, out_ub = (out_lb + out_ub - EPS) / 2., (out_lb + out_ub + EPS) / 2.
 
                     # add the output var and constraint
-                    var = model.addVar(lb=out_lb, ub=out_ub, obj=0, vtype=grb.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
+                    var = model.addVar(lb=out_lb, ub=out_ub, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'lay{self.name}_{neuron_idx}')
                     model.addConstr(lin_expr == var, name=f'lay{self.name}_{neuron_idx}_eq')
                     neuron_idx += 1
 
@@ -713,7 +713,7 @@ class BoundPad(Bound):
                 for out_col_idx in range(this_layer_shape[3]):
                     col_pad = out_col_idx < top or out_col_idx >= this_layer_shape[3] - bottom
                     if row_pad or col_pad:
-                        v = model.addVar(lb=0, ub=0, obj=0, vtype=grb.GRB.CONTINUOUS, name=f'pad{self.name}_{neuron_idx}')
+                        v = model.addVar(lb=0, ub=0, obj=0, vtype=BACKEND.solver.GRB.CONTINUOUS, name=f'pad{self.name}_{neuron_idx}')
                     else:
                         v = gvars_array[out_chan_idx, out_row_idx - left, out_col_idx - top]
                     # print(out_chan_idx, out_row_idx, out_col_idx, row_pad, col_pad, v.LB, v.UB)

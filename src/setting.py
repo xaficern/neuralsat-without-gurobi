@@ -2,12 +2,8 @@ import torch
 import json
 import os
 
-from mip.backend import HAS_MIP_BACKEND, MIP_BACKEND_NAME
+from milp.backend import configure_backend, get_backend_status
 
-USE_GUROBI = HAS_MIP_BACKEND and MIP_BACKEND_NAME == 'gurobi'
-if not USE_GUROBI:
-    print("[!] MIP backend unavailable. MIP-based features will be disabled.")
-    
 from configure.advanced import BaseSettings, AdvancedSettings
 
 class GlobalSettings(BaseSettings):
@@ -28,6 +24,9 @@ class GlobalSettings(BaseSettings):
         
         # mip verify
         self.use_mip_verify = True 
+        self.mip_backend = 'auto'
+        self.mip_backend_available = False
+        self.mip_backend_name = None
         
         # threshold for input/hidden splitting: 
         self.input_splitting_threshold = 0.5  # > 0.5: use input splitting
@@ -54,31 +53,46 @@ class GlobalSettings(BaseSettings):
         for key, value in advanced.__dict__.items():
             if not key.startswith('_') and key != 'advanced_settings':
                 setattr(self, key, value)
+
+    def _configure_and_apply_mip_backend(self, args):
+        if args is not None and hasattr(args, 'mip_backend') and args.mip_backend is not None:
+            self.mip_backend = args.mip_backend
+
+        try:
+            configure_backend(self.mip_backend)
+        except ValueError:
+            print(f"[!] Unsupported mip_backend={self.mip_backend!r}. Falling back to 'auto'.")
+            self.mip_backend = 'auto'
+            configure_backend(self.mip_backend)
+        backend_status = get_backend_status()
+        self.mip_backend_available = backend_status['available']
+        self.mip_backend_name = backend_status['active']
+        if not self.mip_backend_available:
+            detail = f" ({backend_status['error']})" if backend_status['error'] else ""
+            print(
+                "[!] MIP backend unavailable for "
+                f"{self.mip_backend!r}. MIP-based features will be disabled.{detail}"
+            )
+
+        self.use_mip_verify = self.use_mip_verify and self.mip_backend_available
+        self.use_mip_tightening = self.use_mip_tightening and self.mip_backend_available
+        if hasattr(self, 'use_mip_attack'):
+            self.use_mip_attack = self.use_mip_attack and self.mip_backend_available
     
     def setup(self, args=None):
+        # add advanced settings
+        self._add_advanced_settings(args)
+
+        self._configure_and_apply_mip_backend(args)
+
         if args is not None:
             if hasattr(args, 'disable_attack'):
                 self.use_attack = args.disable_attack
             if hasattr(args, 'disable_restart'):
                 self.use_restart = args.disable_restart
             if hasattr(args, 'disable_stabilize'):
-                self.use_mip_tightening = args.disable_stabilize and USE_GUROBI
-        else:
-            self.use_mip_tightening = USE_GUROBI
-        
-        # add advanced settings
-        self._add_advanced_settings(args)
-        
-        # TODO: remove this
-        # self.use_mip_verify = False
-        # self.use_mip_tightening = False
-        # self.use_restart = False
-        # self.use_attack = False
-        # self.mip_tightening_timeout_per_neuron = 2.0
-        # self.restart_visited_hidden_branches = 100
-        # self.share_alphas = True
-        # self.skip_preprocess = False
-        
+                self.use_mip_tightening = args.disable_stabilize and self.mip_backend_available
+
         # load specific settings from json
         if args is not None and args.setting_file is not None:
             assert os.path.exists(args.setting_file), f"Setting file not found: {args.setting_file=}"

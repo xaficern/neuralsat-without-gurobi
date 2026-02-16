@@ -5,7 +5,7 @@ import torch
 import time
 import math
 import copy
-from mip.backend import grb, require_mip_backend
+from milp.backend import BACKEND, require_mip_backend
 
 from helper.misc.result import AbstractResults
 from helper.misc.check import check_solution
@@ -170,11 +170,11 @@ def mip_solver_worker(candidate, n_inputs):
     if vlb > 0:
         return None
     
-    tmp_model.setObjective(v, grb.GRB.MINIMIZE)
+    tmp_model.setObjective(v, BACKEND.solver.GRB.MINIMIZE)
     tmp_model.update()
     try:
         tmp_model.optimize()
-    except grb.GurobiError as e:
+    except BACKEND.solver.GurobiError as e:
         print(f'Gurobi error: {e.message}')
         return None
     except KeyboardInterrupt:
@@ -193,7 +193,7 @@ def mip_solver_worker(candidate, n_inputs):
         
     print(f'[!] Attacking {candidate} [{vlb, vub}], status: {tmp_model.status}, #vars: {tmp_model.NumVars}, #constrs: {tmp_model.NumConstrs}')
     
-    if tmp_model.status in [3, 11]: # infeasible
+    if tmp_model.status in [BACKEND.solver.GRB.INFEASIBLE, BACKEND.solver.GRB.INTERRUPTED]: # infeasible/aborted
         multiprocess_stop = True
         
     return adv    
